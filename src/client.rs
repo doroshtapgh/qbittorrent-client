@@ -165,7 +165,7 @@ impl QBittorrentClient {
         Ok(res.json::<SyncMainData>().await?)
     }
 
-    // is not implemented yet by qBittorrent
+    // is not implemented by qBittorrent yet
     // pub async fn sync_peers_data<S: ToString>(&self, hash: S, rid: Option<usize>) -> Result<, QBittorrentError> {}
 
     pub async fn global_transfer_info(&self) -> Result<GlobalTransferInfo, QBittorrentError> {
