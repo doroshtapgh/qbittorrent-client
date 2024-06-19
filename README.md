@@ -17,11 +17,11 @@ qbittorrent-client is a wrapper of qBittorrent WebAPI(https://github.com/qbittor
     - [x] Get log
     - [x] Get peer log
 4. Sync
-    - [ ] Get main data
-    - [ ] Get torrent peers data
+    - [x] Get main data
+    - [ ] Get torrent peers data (Not implemented in qBittorrent WebAPI yet)
 5. Transfer info
-    - [ ] Get global transfer info
-    - [ ] Get alternative speed limits state
+    - [x] Get global transfer info
+    - [x] Get alternative speed limits state
     - [ ] Toggle alternative speed limits
     - [ ] Get global download limit
     - [ ] Set global download limit
@@ -75,7 +75,7 @@ qbittorrent-client is a wrapper of qBittorrent WebAPI(https://github.com/qbittor
     - [ ] Set super seeding
     - [ ] Rename file
     - [ ] Rename folder
-7. RSS
+7. RSS (experimental)
     - [ ] Add folder
     - [ ] Add feed
     - [ ] Remove item

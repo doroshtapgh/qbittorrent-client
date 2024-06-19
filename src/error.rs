@@ -7,6 +7,7 @@ use std::{
 pub enum QBittorrentError {
     AuthFailed,
     BadRequest,
+    BadInput(String),
     Url(url::ParseError),
     Reqwest(reqwest::Error)
 }
@@ -16,6 +17,7 @@ impl fmt::Display for QBittorrentError {
         match *self {
             QBittorrentError::AuthFailed => write!(f, "failed to log in"),
             QBittorrentError::BadRequest => write!(f, "bad request http error occured"),
+            QBittorrentError::BadInput(ref err) => write!(f, "bad input error occured: {}", err),
             QBittorrentError::Url(ref err) => write!(f, "url error occured: {}", err),
             QBittorrentError::Reqwest(ref err) => write!(f, "reqwest error occured: {}", err)
         }
@@ -27,6 +29,7 @@ impl Error for QBittorrentError {
         match *self {
             QBittorrentError::AuthFailed => None,
             QBittorrentError::BadRequest => None,
+            QBittorrentError::BadInput(..) => None,
             QBittorrentError::Url(ref err) => Some(err),
             QBittorrentError::Reqwest(ref err) => Some(err)
         }

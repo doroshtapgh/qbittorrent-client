@@ -3,11 +3,7 @@ use tokio::sync::RwLock;
 
 use crate::{
     models::{
-        AppBuildInfo,
-        AppPreferences,
-        JsonObject,
-        Log, LogParams,
-        PeerLog
+        AppBuildInfo, AppPreferences, GlobalTransferInfo, JsonObject, Log, LogParams, PeerLog, SyncMainData
     },
     QBittorrentError
 };
@@ -156,6 +152,41 @@ impl QBittorrentClient {
         let res = self.http_client.get(peers_url).send().await?;
 
         Ok(res.json::<Vec<PeerLog>>().await?)
+    }
+
+    pub async fn sync_main_data(&self, response_id: Option<usize>) -> Result<SyncMainData, QBittorrentError> {
+        let mut sync_url = self.build_url("/api/v2/sync/maindata").await?;
+
+        sync_url.query_pairs_mut()
+            .append_pair("rid", &response_id.unwrap_or(0).to_string());
+
+        let res = self.http_client.get(sync_url).send().await?;
+
+        Ok(res.json::<SyncMainData>().await?)
+    }
+
+    // is not implemented yet by qBittorrent
+    // pub async fn sync_peers_data<S: ToString>(&self, hash: S, rid: Option<usize>) -> Result<, QBittorrentError> {}
+
+    pub async fn global_transfer_info(&self) -> Result<GlobalTransferInfo, QBittorrentError> {
+        let info_url = self.build_url("/api/v2/transfer/info").await?;
+
+        let res = self.http_client.get(info_url).send().await?;
+
+        Ok(res.json::<GlobalTransferInfo>().await?)
+    }
+
+    pub async fn alternative_speed_limits_enabled(&self) -> Result<bool, QBittorrentError> {
+        let limits_url = self.build_url("/api/v2/transfer/speedLimitsMode").await?;
+
+        let res = self.http_client.get(limits_url).send().await?;
+        let text = res.text().await?;
+
+        if text == "1" {
+            Ok(true)
+        } else {
+            Ok(false)
+        }
     }
 }
 

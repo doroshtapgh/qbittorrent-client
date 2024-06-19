@@ -17,7 +17,7 @@ pub struct AppPreferences {
     pub locale: Option<String>,
     pub create_subfolder_enabled: Option<bool>,
     pub start_paused_enabled: Option<bool>,
-    // not implemented yet: auto_delete_mode
+    // not implemented yet (by qBittorrent): pub auto_delete_mode: isize(?),
     pub preallocate_all: Option<bool>,
     pub incomplete_files_ext: Option<bool>,
     pub auto_tmm_enabled: Option<bool>,
@@ -130,7 +130,7 @@ pub struct AppPreferences {
     pub web_ui_custom_http_headers: Option<String>,
     pub max_seeding_time_enabled: Option<bool>,
     pub max_seeding_time: Option<isize>,
-    // not implemented yet: pub announce_ip
+    // not implemented yet (by qBittorrent): pub announce_ip: String,
     pub announce_to_all_tiers: Option<bool>,
     pub announce_to_all_trackers: Option<bool>,
     pub async_io_threads: Option<usize>,
@@ -240,4 +240,86 @@ pub struct PeerLog {
     pub timestamp: usize,
     pub blocked: bool,
     pub reason: String
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct SyncMainData {
+    pub rid: usize,
+    pub full_update: bool,
+    pub torrents: HashMap<String, Torrent>,
+    pub torrents_removed: Vec<String>,
+    pub categories: HashMap<String, Category>,
+    pub categories_removed: Vec<String>,
+    pub tags: Vec<String>,
+    pub tags_removed: Vec<String>,
+    pub server_state: GlobalTransferInfo
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct GlobalTransferInfo {
+    pub dl_info_speed: usize,
+    pub dl_info_data: usize,
+    pub up_info_speed: usize,
+    pub up_info_data: usize,
+    pub dl_rate_limit: usize,
+    pub up_rate_limit: usize,
+    pub dht_nodes: usize,
+    pub connection_status: String
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct Category {
+    pub name: String,
+    #[serde(rename = "savePath")]
+    pub save_path: String
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct Torrent {
+    pub added_on: usize,
+    pub amount_left: usize,
+    pub auto_tmm: bool,
+    pub availability: f64,
+    pub category: String,
+    pub completed: usize,
+    pub completion_on: usize,
+    pub content_path: String,
+    pub dl_limit: isize,
+    pub dlspeed: usize,
+    pub downloaded: usize,
+    pub downloaded_session: usize,
+    pub eta: usize,
+    pub f_l_piece_prio: bool,
+    pub force_start: bool,
+    pub hash: String,
+    #[serde(rename = "isPrivate")]
+    pub is_private: bool,
+    pub last_activity: usize,
+    pub magnet_uri: String,
+    pub max_ratio: f64,
+    pub max_seeding_time: usize,
+    pub name: String,
+    pub num_complete: usize,
+    pub num_incomplete: usize,
+    pub num_leechs: usize,
+    pub num_seeds: usize,
+    pub priority: isize,
+    pub progress: f64,
+    pub ratio: f64,
+    // not implemented yet (by qBittorrent): pub ratio_limit: f64,
+    pub save_path: String,
+    pub seeding_time: usize,
+    // not implemented yet (by qBittorrent): pub seeding_time_limit: isize,
+    pub seen_complete: usize,
+    pub seq_dl: bool,
+    pub size: usize,
+    pub state: String,
+    pub super_seeding: bool,
+    pub tags: String,
+    pub time_active: usize,
+    pub tracker: String,
+    pub up_limit: isize,
+    pub uploaded: usize,
+    pub uploaded_session: usize,
+    pub upspeed: usize
 }
