@@ -22,23 +22,23 @@ qbittorrent-client is a wrapper of qBittorrent WebAPI(https://github.com/qbittor
 5. Transfer info
     - [x] Get global transfer info
     - [x] Get alternative speed limits state
-    - [ ] Toggle alternative speed limits
-    - [ ] Get global download limit
-    - [ ] Set global download limit
-    - [ ] Get global upload limit
-    - [ ] Set global upload limit
-    - [ ] Ban peers
+    - [x] Toggle alternative speed limits
+    - [x] Get global download limit
+    - [x] Set global download limit
+    - [x] Get global upload limit
+    - [x] Set global upload limit
+    - [x] Ban peers
 6. Torrent management
-    - [ ] Get torrent list
-    - [ ] Get torrent generic properties
-    - [ ] Get torrent trackers
-    - [ ] Get torrent web seeds
+    - [x] Get torrent list
+    - [x] Get torrent generic properties
+    - [x] Get torrent trackers
+    - [x] Get torrent web seeds
     - [ ] Get torrent contents
     - [ ] Get torrent pieces' states
     - [ ] Get torrent pieces' hashes
-    - [ ] Pause torrents
-    - [ ] Resume torrents
-    - [ ] Delete torrents
+    - [x] Pause torrents
+    - [x] Resume torrents
+    - [x] Delete torrents
     - [ ] Recheck torrents
     - [ ] Reannounce torrents
     - [ ] Edit trackers

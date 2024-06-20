@@ -222,7 +222,7 @@ pub struct LogParams {
 }
 
 impl Default for LogParams {
-    fn default() -> LogParams {
+    fn default() -> Self {
         LogParams {
             normal: true,
             info: true,
@@ -322,4 +322,122 @@ pub struct Torrent {
     pub uploaded: usize,
     pub uploaded_session: usize,
     pub upspeed: usize
+}
+
+#[derive(Debug, Clone)]
+pub struct TorrentListParams {
+    pub filter: TorrentListFilter,
+    pub category: String,
+    pub tag: String,
+    pub sort: Option<String>,
+    pub reverse: bool,
+    pub limit: Option<usize>,
+    pub offset: Option<isize>,
+    pub hashes: Option<String>
+}
+
+impl Default for TorrentListParams {
+    fn default() -> Self {
+        TorrentListParams {
+            filter: TorrentListFilter::All,
+            category: String::new(),
+            tag: String::new(),
+            sort: None,
+            reverse: false,
+            limit: None,
+            offset: None,
+            hashes: None
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum TorrentListFilter {
+    All,
+    Downloading,
+    Seeding,
+    Completed,
+    Paused,
+    Active,
+    Inactive,
+    Resumed,
+    Stalled,
+    StalledUploading,
+    StalledDownloading,
+    Errored
+}
+
+impl ToString for TorrentListFilter {
+    fn to_string(&self) -> String {
+        match *self {
+            TorrentListFilter::All => String::from("all"),
+            TorrentListFilter::Downloading => String::from("downloading"),
+            TorrentListFilter::Seeding => String::from("seeding"),
+            TorrentListFilter::Completed => String::from("completed"),
+            TorrentListFilter::Paused => String::from("paused"),
+            TorrentListFilter::Active => String::from("active"),
+            TorrentListFilter::Inactive => String::from("inactive"),
+            TorrentListFilter::Resumed => String::from("resumed"),
+            TorrentListFilter::Stalled => String::from("stalled"),
+            TorrentListFilter::StalledUploading => String::from("stalled_uploading"),
+            TorrentListFilter::StalledDownloading => String::from("stalled_downloading"),
+            TorrentListFilter::Errored => String::from("errored")
+        }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct TorrentGenericProperties {
+    pub save_path: String,
+    pub creation_date: usize,
+    pub piece_size: usize,
+    pub comment: String,
+    pub total_wasted: usize,
+    pub total_uploaded: usize,
+    pub total_uploaded_session: usize,
+    pub total_downloaded: usize,
+    pub total_downloaded_session: usize,
+    pub up_limit: isize,
+    pub dl_limit: isize,
+    pub time_elapsed: usize,
+    pub seeding_time: usize,
+    pub nb_connections: usize,
+    pub nb_connections_limit: usize,
+    pub share_ratio: f64,
+    pub addition_date: usize,
+    pub completion_date: usize,
+    pub created_by: String,
+    pub dl_speed_avg: usize,
+    pub dl_speed: usize,
+    pub eta: usize,
+    pub last_seen: usize,
+    pub peers: usize,
+    pub peers_total: usize,
+    pub pieces_have: usize,
+    pub pieces_num: usize,
+    pub reannounce: usize,
+    pub seeds: usize,
+    pub seeds_total: usize,
+    pub total_size: usize,
+    pub up_speed_avg: usize,
+    pub up_speed: usize,
+    #[serde(rename = "isPrivate")]
+    pub is_private: bool
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct TorrentTracker {
+    pub url: String,
+    pub status: usize,
+    pub tier: isize,
+    pub num_peers: usize,
+    pub num_seeds: usize,
+    pub num_leeches: usize,
+    pub num_downloaded: usize,
+    pub msg: String
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct TorrentWebSeed {
+    pub url: String
 }

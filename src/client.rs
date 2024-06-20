@@ -3,7 +3,7 @@ use tokio::sync::RwLock;
 
 use crate::{
     models::{
-        AppBuildInfo, AppPreferences, GlobalTransferInfo, JsonObject, Log, LogParams, PeerLog, SyncMainData
+        AppBuildInfo, AppPreferences, GlobalTransferInfo, JsonObject, Log, LogParams, PeerLog, SyncMainData, Torrent, TorrentGenericProperties, TorrentListParams, TorrentTracker, TorrentWebSeed
     },
     QBittorrentError
 };
@@ -156,7 +156,6 @@ impl QBittorrentClient {
 
     pub async fn sync_main_data(&self, response_id: Option<usize>) -> Result<SyncMainData, QBittorrentError> {
         let mut sync_url = self.build_url("/api/v2/sync/maindata").await?;
-
         sync_url.query_pairs_mut()
             .append_pair("rid", &response_id.unwrap_or(0).to_string());
 
@@ -170,7 +169,6 @@ impl QBittorrentClient {
 
     pub async fn global_transfer_info(&self) -> Result<GlobalTransferInfo, QBittorrentError> {
         let info_url = self.build_url("/api/v2/transfer/info").await?;
-
         let res = self.http_client.get(info_url).send().await?;
 
         Ok(res.json::<GlobalTransferInfo>().await?)
@@ -186,6 +184,185 @@ impl QBittorrentClient {
             Ok(true)
         } else {
             Ok(false)
+        }
+    }
+
+    pub async fn toggle_alternative_speed_limits(&self) -> Result<(), QBittorrentError> {
+        let toggle_url = self.build_url("/api/v2/transfer/toggleSpeedLimitsMode").await?;
+        self.http_client.post(toggle_url).send().await?;
+
+        Ok(())
+    }
+
+    // The response is the value of current global download speed limit in bytes/second; this value will be zero if no limit is applied.
+    pub async fn download_limit(&self) -> Result<usize, QBittorrentError> {
+        let limit_url = self.build_url("/api/v2/transfer/downloadLimit").await?;
+        let res = self.http_client.get(limit_url).send().await?;
+        let text = res.text().await?;
+
+        Ok(text.parse::<usize>()?)
+    }
+
+    pub async fn set_download_limit(&self, limit: usize) -> Result<(), QBittorrentError> {
+        let mut limit_url = self.build_url("/api/v2/transfer/setDownloadLimit").await?;
+        limit_url.query_pairs_mut()
+            .append_pair("limit", &limit.to_string());
+
+        self.http_client.post(limit_url).send().await?;
+
+        Ok(())
+    }
+
+    // The response is the value of current global upload speed limit in bytes/second; this value will be zero if no limit is applied.
+    pub async fn upload_limit(&self) -> Result<usize, QBittorrentError> {
+        let limit_url = self.build_url("/api/v2/transfer/uploadLimit").await?;
+        let res = self.http_client.get(limit_url).send().await?;
+        let text = res.text().await?;
+
+        Ok(text.parse::<usize>()?)
+    }
+
+    pub async fn set_upload_limit(&self, limit: usize) -> Result<(), QBittorrentError> {
+        let mut limit_url = self.build_url("/api/v2/transfer/setUploadLimit").await?;
+        limit_url.query_pairs_mut()
+            .append_pair("limit", &limit.to_string());
+
+        self.http_client.post(limit_url).send().await?;
+
+        Ok(())
+    }
+
+    // The peer to ban, or multiple peers separated by a pipe |. Each peer is a colon-separated host:port
+    pub async fn ban_peers<S: ToString>(&self, peers: S) -> Result<(), QBittorrentError> {
+        let mut ban_url = self.build_url("/api/v2/transfer/banPeers").await?;
+        ban_url.query_pairs_mut()
+            .append_pair("peers", &peers.to_string());
+
+        let res = self.http_client.post(ban_url).send().await?;
+
+        if res.status().is_success() {
+            Ok(())
+        } else {
+            Err(QBittorrentError::BadRequest)
+        }
+    }
+
+    pub async fn torrent_list(&self, params: TorrentListParams) -> Result<Vec<Torrent>, QBittorrentError> {
+        let mut list_url = self.build_url("/api/v2/torrents/info").await?;
+        let mut pairs = list_url.query_pairs_mut();
+        pairs.append_pair("filter", &params.filter.to_string());
+        pairs.append_pair("category", &urlencoding::encode(&params.category));
+        pairs.append_pair("tag", &urlencoding::encode(&params.tag));
+        pairs.append_pair("reverse", if params.reverse { "true" } else { "false" });
+        
+        if let Some(sort) = params.sort {
+            pairs.append_pair("sort", &sort);
+        }
+
+        if let Some(limit) = params.limit {
+            pairs.append_pair("limit", &limit.to_string());
+        }
+
+        if let Some(offset) = params.offset {
+            pairs.append_pair("offset", &offset.to_string());
+        }
+
+        if let Some(hashes) = params.hashes {
+            pairs.append_pair("hashes", &hashes);
+        }
+
+        drop(pairs);
+
+        let res = self.http_client.get(list_url).send().await?;
+
+        if res.status().is_success() {
+            Ok(res.json::<Vec<Torrent>>().await?)
+        } else {
+            Err(QBittorrentError::BadRequest)
+        }
+    }
+
+    pub async fn torrent_generic_properties<S: ToString>(&self, hash: S) -> Result<TorrentGenericProperties, QBittorrentError> {
+        let mut props_url = self.build_url("/api/v2/torrents/properties").await?;
+        props_url.query_pairs_mut().append_pair("hash", &hash.to_string());
+
+        let res = self.http_client.get(props_url).send().await?;
+
+        if res.status().is_success() {
+            Ok(res.json::<TorrentGenericProperties>().await?)
+        } else {
+            Err(QBittorrentError::BadInput("torrent hash was not found".to_string()))
+        }
+    }
+
+    pub async fn torrent_trackers<S: ToString>(&self, hash: S) -> Result<Vec<TorrentTracker>, QBittorrentError> {
+        let mut trackers_url = self.build_url("/api/v2/torrents/trackers").await?;
+        trackers_url.query_pairs_mut().append_pair("hash", &hash.to_string());
+
+        let res = self.http_client.get(trackers_url).send().await?;
+
+        if res.status().is_success() {
+            Ok(res.json::<Vec<TorrentTracker>>().await?)
+        } else {
+            Err(QBittorrentError::BadInput("torrent hash was not found".to_string()))
+        }
+    }
+
+    pub async fn torrent_web_seeds<S: ToString>(&self, hash: S) -> Result<Vec<TorrentWebSeed>, QBittorrentError> {
+        let mut seeds_url = self.build_url("/api/v2/torrents/webseeds").await?;
+        seeds_url.query_pairs_mut().append_pair("hash", &hash.to_string());
+
+        let res = self.http_client.get(seeds_url).send().await?;
+
+        if res.status().is_success() {
+            Ok(res.json::<Vec<TorrentWebSeed>>().await?)
+        } else {
+            Err(QBittorrentError::BadInput("torrent hash was not found".to_string()))
+        }
+    }
+
+    // hashes: The hashes of the torrents you want to pause. hashes can contain multiple hashes separated by |, to pause multiple torrents, or set to all, to pause all torrents.
+    pub async fn torrent_pause<S: ToString>(&self, hashes: S) -> Result<(), QBittorrentError> {
+        let mut pause_url = self.build_url("/api/v2/torrents/pause").await?;
+        pause_url.query_pairs_mut().append_pair("hashes", &hashes.to_string());
+
+        let res = self.http_client.post(pause_url).send().await?;
+
+        if res.status().is_success() {
+            Ok(())
+        } else {
+            Err(QBittorrentError::BadRequest)
+        }
+    }
+
+    // hashes: The hashes of the torrents you want to pause. hashes can contain multiple hashes separated by |, to pause multiple torrents, or set to all, to pause all torrents.
+    pub async fn torrent_resume<S: ToString>(&self, hashes: S) -> Result<(), QBittorrentError> {
+        let mut resume_url = self.build_url("/api/v2/torrents/resume").await?;
+        resume_url.query_pairs_mut().append_pair("hashes", &hashes.to_string());
+
+        let res = self.http_client.post(resume_url).send().await?;
+
+        if res.status().is_success() {
+            Ok(())
+        } else {
+            Err(QBittorrentError::BadRequest)
+        }
+    }
+
+    // hashes: The hashes of the torrents you want to delete. hashes can contain multiple hashes separated by |, to delete multiple torrents, or set to all, to delete all torrents.
+    // delete_files: If set to true, the downloaded data will also be deleted, otherwise has no effect.
+    pub async fn torrent_delete<S: ToString>(&self, hashes: S, delete_files: bool) -> Result<(), QBittorrentError> {
+        let mut delete_url = self.build_url("/api/v2/torrents/delete").await?;
+        delete_url.query_pairs_mut()
+            .append_pair("hashes", &hashes.to_string())
+            .append_pair("deleteFiles", if delete_files { "true" } else { "false" });
+
+        let res = self.http_client.post(delete_url).send().await?;
+
+        if res.status().is_success() {
+            Ok(())
+        } else {
+            Err(QBittorrentError::BadRequest)
         }
     }
 }
